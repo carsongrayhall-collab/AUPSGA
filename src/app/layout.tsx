@@ -20,6 +20,11 @@ export const metadata: Metadata = {
   title: "AUP Student Government Association",
   description:
     "The home page for The American University of Paris Student Government Association.",
+  icons: {
+    icon: "/favicon.png",
+    shortcut: "/favicon.png",
+    apple: "/favicon.png",
+  },
 };
 
 export default function RootLayout({
