@@ -1,0 +1,40 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #b10200;
+  --sga-red: #b10200;
+}
+
+@theme inline {
+  --color-background: #ffffff;
+  --color-foreground: #b10200;
+  --color-sga-red: #b10200;
+  --font-sans: "Barlow Condensed", "Arial Narrow", Arial, sans-serif;
+  --font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-width: 320px;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-barlow-condensed), "Arial Narrow", Arial, sans-serif;
+}
+
+a {
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+::selection {
+  background: var(--sga-red);
+  color: #ffffff;
+}
