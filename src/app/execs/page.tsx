@@ -20,7 +20,7 @@ const undergraduateProfiles: ExecutiveProfile[] = [
     email: "undergrad-president@aup.edu",
   },
   {
-    name: "Carson Hall",
+    name: "Vacant",
     role: "Undergraduate Vice President",
     description:
       "Supports the Undergraduate President, helps coordinate student advocacy initiatives, and and represents undergraduate student interests.",
