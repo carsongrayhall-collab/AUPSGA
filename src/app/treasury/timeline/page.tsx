@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { TreasuryTimelineScroller, type TreasuryTimelineBlock } from "@/components/TreasuryTimelineScroller";
+import { getPublishedTimelineEvents } from "@/lib/siteConfig";
 
 export const metadata: Metadata = {
   title: "Treasury Timeline | AUP SGA",
@@ -100,7 +101,21 @@ const timelineBlocks: TreasuryTimelineBlock[] = [
   },
 ];
 
-export default function TreasuryTimelinePage() {
+export default async function TreasuryTimelinePage() {
+  const configuredEvents = await getPublishedTimelineEvents();
+  const configuredTimelineBlocks: TreasuryTimelineBlock[] = configuredEvents.length
+    ? [
+        {
+          semester: "Configured Treasury Timeline",
+          events: configuredEvents.map((event) => ({
+            body: event.description ?? "",
+            date: event.time ? `${event.date} / ${event.time}` : event.date,
+            title: event.title,
+          })),
+        },
+      ]
+    : timelineBlocks;
+
   return (
     <main className="bg-white text-sga-red">
       <section aria-labelledby="treasury-timeline-heading">
@@ -124,7 +139,7 @@ export default function TreasuryTimelinePage() {
         </div>
       </section>
 
-      <TreasuryTimelineScroller blocks={timelineBlocks} />
+      <TreasuryTimelineScroller blocks={configuredTimelineBlocks} />
     </main>
   );
 }

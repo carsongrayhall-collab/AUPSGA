@@ -1,6 +1,7 @@
 export type DropdownItem = {
   label: string;
   href: string;
+  external?: boolean;
 };
 
 export type NavItem = {
@@ -29,7 +30,7 @@ export const navItems: NavItem[] = [
       { label: "BUDGET APPROVALS HISTORY", href: "/treasury/budget-approvals-history" },
       { label: "HOW DO I GET MY MONEY?", href: "/treasury/how-do-i-get-my-money" },
       { label: "TREASURY TIMELINE", href: "/treasury/timeline" },
-      { label: "BOOK AN APPOINTMENT", href: "/treasury/book-an-appointment" },
+      { label: "BOOK AN APPOINTMENT", href: "https://calendly.com/a120125-aup/30min", external: true },
     ],
   },
   {
@@ -52,5 +53,4 @@ export const navItems: NavItem[] = [
       { label: "MERCH SHOP", href: "/engagement/merch-shop" },
     ],
   },
-  { label: "IT PANEL", href: "/it-panel" },
 ];

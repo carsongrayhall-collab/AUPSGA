@@ -1,0 +1,157 @@
+import "server-only";
+
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import path from "node:path";
+import { Redis } from "@upstash/redis";
+
+export type MediaConfig = {
+  alt: string;
+  objectPosition?: string;
+  src: string;
+  updatedAt: string;
+};
+
+export type TimelineConfigEvent = {
+  date: string;
+  description?: string;
+  displayOrder: number;
+  id: string;
+  published: boolean;
+  time?: string;
+  title: string;
+};
+
+export type WorkbookConfig = {
+  allocationRange: string;
+  lastSuccessfulSync?: string;
+  recordsRange: string;
+  sharePointUrl: string;
+  uploadedFile?: {
+    fileName: string;
+    size: number;
+    src: string;
+    updatedAt: string;
+  };
+  worksheetName: string;
+};
+
+export type SiteConfig = {
+  media: Record<string, MediaConfig>;
+  timeline: TimelineConfigEvent[];
+  workbook: WorkbookConfig;
+};
+
+const CONFIG_KEY = "sga:site-config:v1";
+const localConfigPath = path.join(process.cwd(), ".data", "site-config.json");
+
+export const defaultConfig: SiteConfig = {
+  media: {},
+  timeline: [
+    {
+      date: "September 10th, 2026",
+      description:
+        "Meet the Treasurer Night gives students a chance to ask funding questions, understand the budget process, and get direct guidance on how to request money from SGA.",
+      displayOrder: 10,
+      id: "fall-meet-the-treasurer",
+      published: true,
+      title: "Meet The Treasurer",
+    },
+    {
+      date: "September 14th - 21st, 2026",
+      description:
+        "For two weeks, the Budget and Finance Committee meets every weekday from 17h - 19h so that budget requests get approved faster for the beginning of the semester.",
+      displayOrder: 20,
+      id: "fall-daily-bfc-meetings",
+      published: true,
+      time: "17h - 19h",
+      title: "Daily BFC Meetings",
+    },
+    {
+      date: "October 21st, 2026",
+      description:
+        "The Midterm Check-In gives students and club leaders a chance to review spending progress and submit receipts incurred up to this point.",
+      displayOrder: 30,
+      id: "fall-midterm-check-in",
+      published: true,
+      title: "Midterm Check-In",
+    },
+  ],
+  workbook: {
+    allocationRange: "Budget Allocation!A1:D20",
+    recordsRange: "Treasury Records!A1:H100",
+    sharePointUrl:
+      "https://aupedu.sharepoint.com/:x:/s/sgaexecs_group/IQDvTYqhJiW5Rqd4ai-FcL-LARivEHBANxZzhlj1FMsTIeo?e=7bb2dc&CID=5b45c265-2655-118c-2acf-c477596197dd",
+    worksheetName: "Treasury Records",
+  },
+};
+
+function getRedis() {
+  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+    return null;
+  }
+
+  return new Redis({
+    token: process.env.UPSTASH_REDIS_REST_TOKEN,
+    url: process.env.UPSTASH_REDIS_REST_URL,
+  });
+}
+
+function normalizeConfig(config: Partial<SiteConfig> | null | undefined): SiteConfig {
+  return {
+    media: config?.media ?? defaultConfig.media,
+    timeline: config?.timeline ?? defaultConfig.timeline,
+    workbook: {
+      ...defaultConfig.workbook,
+      ...(config?.workbook ?? {}),
+    },
+  };
+}
+
+export async function getSiteConfig(): Promise<SiteConfig> {
+  const redis = getRedis();
+
+  if (redis) {
+    return normalizeConfig(await redis.get<SiteConfig>(CONFIG_KEY));
+  }
+
+  try {
+    return normalizeConfig(JSON.parse(await readFile(localConfigPath, "utf8")) as SiteConfig);
+  } catch {
+    return defaultConfig;
+  }
+}
+
+export async function saveSiteConfig(config: SiteConfig) {
+  const redis = getRedis();
+
+  if (redis) {
+    await redis.set(CONFIG_KEY, config);
+    return;
+  }
+
+  if (process.env.VERCEL === "1") {
+    throw new Error("Persistent Redis storage is required in production.");
+  }
+
+  await mkdir(path.dirname(localConfigPath), { recursive: true });
+  await writeFile(localConfigPath, JSON.stringify(config, null, 2));
+}
+
+export async function getMediaConfig(key: string) {
+  const config = await getSiteConfig();
+  return config.media[key] ?? null;
+}
+
+export async function setMediaConfig(key: string, media: MediaConfig) {
+  const config = await getSiteConfig();
+  config.media[key] = media;
+  await saveSiteConfig(config);
+}
+
+export async function getPublishedTimelineEvents() {
+  const config = await getSiteConfig();
+
+  return config.timeline
+    .filter((event) => event.published)
+    .sort((a, b) => a.displayOrder - b.displayOrder);
+}

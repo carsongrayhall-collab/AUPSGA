@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { MediaSlot } from "@/components/MediaSlot";
 
@@ -61,22 +62,21 @@ function TreasuryResourceCard({
   title,
   href,
   body,
-  featured = false,
 }: {
   title: string;
   href: string;
   body: string;
-  featured?: boolean;
 }) {
   return (
-    <article className="relative flex min-h-[15rem] flex-col justify-end bg-white px-5 pb-5 pt-24 text-center text-sga-red shadow-[6px_3px_2px_rgba(0,0,0,0.22)]">
-      {featured ? (
-        <div className="absolute left-1/2 top-2 h-16 w-36 -translate-x-1/2 bg-sga-red [clip-path:polygon(0_0,100%_0,88%_100%,12%_100%)]" aria-hidden="true" />
-      ) : null}
-      <p className="text-xl font-normal leading-[1.08] tracking-[-0.05em]">{body}</p>
-      <TreasurerButton href={href} className="mt-5 w-full px-3 text-[1.35rem]">
-        {title}
-      </TreasurerButton>
+    <article className="relative flex min-h-[16rem] flex-col justify-between bg-white px-6 pb-8 pt-8 text-center text-sga-red shadow-[6px_4px_2px_rgba(0,0,0,0.22)] md:min-h-[15.5rem] md:px-7 md:pt-9">
+      <p className="mx-auto max-w-[18rem] text-2xl font-normal leading-[1.04] tracking-[-0.05em] md:text-[1.65rem]">
+        {body}
+      </p>
+      <div className="absolute inset-x-0 -bottom-6 flex justify-center px-6">
+        <TreasurerButton href={href} className="w-full max-w-[18rem] px-3 text-[1.55rem] md:text-[1.65rem]">
+          {title}
+        </TreasurerButton>
+      </div>
     </article>
   );
 }
@@ -104,6 +104,10 @@ export default function TreasurerPage() {
 
             <MediaSlot
               label="Treasury overview media slot"
+              src="/images/treasurer-headshot-1.jpg"
+              alt="Lorelei Smucker standing at a white railing"
+              priority
+              imageClassName="object-cover object-[50%_26%]"
               className="mx-auto aspect-[202/255] w-full max-w-[25rem] translate-y-8 shadow-[6px_4px_2px_rgba(0,0,0,0.22)] md:translate-y-14"
             />
           </div>
@@ -119,6 +123,9 @@ export default function TreasurerPage() {
       <section aria-labelledby="meet-treasurer-heading" className="mx-auto grid max-w-6xl gap-8 px-6 pb-12 md:grid-cols-[0.95fr_1fr] md:items-start md:pb-16 lg:px-10">
         <MediaSlot
           label="Lorelei Smucker Treasurer portrait image slot"
+          src="/images/treasurer-headshot-2.jpg"
+          alt="Lorelei Smucker smiling outdoors"
+          imageClassName="object-cover object-center"
           className="aspect-[203/234] w-full shadow-[6px_4px_2px_rgba(0,0,0,0.18)]"
         />
         <div>
@@ -140,15 +147,22 @@ export default function TreasurerPage() {
         </TreasurerButton>
       </section>
 
-      <section aria-labelledby="treasury-resources-heading" className="relative overflow-hidden pb-16 pt-16 md:pb-20">
-        <div className="absolute inset-x-0 top-0 h-44 bg-sga-red" aria-hidden="true" />
-        <div className="absolute inset-x-0 top-0 h-44 opacity-20 [background-image:linear-gradient(135deg,rgba(255,255,255,0.45)_0_1px,transparent_1px_22px)]" aria-hidden="true" />
+      <section aria-labelledby="treasury-resources-heading" className="relative overflow-hidden pb-20 pt-20 md:pb-24">
+        <div className="absolute inset-x-0 top-16 h-44 bg-sga-red md:top-20" aria-hidden="true">
+          <Image
+            src="/images/treasury-page-banner.png"
+            alt=""
+            fill
+            sizes="100vw"
+            className="object-cover opacity-95"
+          />
+        </div>
         <h2 id="treasury-resources-heading" className="sr-only">
           Treasury Resources
         </h2>
-        <div className="relative mx-auto grid max-w-6xl gap-6 px-6 md:grid-cols-3 lg:px-10">
+        <div className="relative mx-auto grid max-w-6xl gap-14 px-6 pt-16 md:grid-cols-3 md:gap-9 md:pt-20 lg:px-10">
           {treasuryCards.map((card, index) => (
-            <TreasuryResourceCard key={card.href} {...card} featured={index === 1} />
+            <TreasuryResourceCard key={`${card.href}-${index}`} {...card} />
           ))}
         </div>
       </section>

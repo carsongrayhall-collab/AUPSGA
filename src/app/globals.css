@@ -1,9 +1,34 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: "Barlow Condensed";
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url("/fonts/barlow-condensed-normal-300.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Barlow Condensed";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/barlow-condensed-normal-400.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Barlow Condensed";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/fonts/barlow-condensed-normal-600.woff2") format("woff2");
+}
+
 :root {
   --background: #ffffff;
   --foreground: #b10200;
   --sga-red: #b10200;
+  --font-barlow-condensed: "Barlow Condensed";
 }
 
 @theme inline {

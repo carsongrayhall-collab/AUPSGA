@@ -16,7 +16,16 @@ export function Footer() {
           <p className="text-xl font-semibold leading-tight">
             The American University of Paris Student Government Association
           </p>
-          <p className="mt-2 text-lg font-light leading-tight">6 Rue du Colonel Combes, 75007 Paris</p>
+          <p className="mt-2 text-lg font-light leading-tight">
+            <Link
+              href="/it-panel"
+              aria-label="Open IT panel"
+              className="rounded-[2px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sga-red"
+            >
+              6
+            </Link>{" "}
+            Rue du Colonel Combes, 75007 Paris
+          </p>
           <p className="text-lg font-light leading-tight">3rd Floor of the Combes Building</p>
           <Link href="mailto:sga@aup.edu" className="text-lg font-light leading-tight hover:underline">
             sga@aup.edu

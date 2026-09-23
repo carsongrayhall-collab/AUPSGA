@@ -3,7 +3,43 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { navItems } from "@/components/navigation";
+import { navItems, type DropdownItem } from "@/components/navigation";
+
+function DropdownLink({ item }: { item: DropdownItem }) {
+  const className = "block whitespace-nowrap py-1.5 outline-none transition hover:text-black focus-visible:text-black focus-visible:underline";
+
+  if (item.external) {
+    return (
+      <a href={item.href} target="_blank" rel="noreferrer" className={className}>
+        {item.label}
+      </a>
+    );
+  }
+
+  return (
+    <Link href={item.href} className={className}>
+      {item.label}
+    </Link>
+  );
+}
+
+function MobileDropdownLink({ item }: { item: DropdownItem }) {
+  const className = "block whitespace-nowrap py-1.5";
+
+  if (item.external) {
+    return (
+      <a href={item.href} target="_blank" rel="noreferrer" className={className}>
+        {item.label}
+      </a>
+    );
+  }
+
+  return (
+    <Link href={item.href} className={className}>
+      {item.label}
+    </Link>
+  );
+}
 
 export function Header() {
   const pathname = usePathname();
@@ -35,7 +71,7 @@ export function Header() {
           </span>
         </Link>
 
-        <nav aria-label="Primary navigation" className="ml-auto hidden lg:block">
+        <nav aria-label="Primary navigation" className="ml-auto hidden lg:w-[47.921875rem] lg:block">
           <ul className="flex items-center gap-6 xl:gap-8">
             {navItems.map((item) => {
               const isActive = isActiveItem(item);
@@ -72,12 +108,7 @@ export function Header() {
                       <ul className="bg-white/85 px-3 py-2 text-[1rem] font-light uppercase leading-[1.2] text-sga-red shadow-[0_8px_20px_rgba(0,0,0,0.14)] backdrop-blur-sm">
                         {item.items?.map((dropdownItem) => (
                           <li key={dropdownItem.href}>
-                            <Link
-                              href={dropdownItem.href}
-                              className="block whitespace-nowrap py-1.5 outline-none transition hover:text-black focus-visible:text-black focus-visible:underline"
-                            >
-                              {dropdownItem.label}
-                            </Link>
+                            <DropdownLink item={dropdownItem} />
                           </li>
                         ))}
                       </ul>
@@ -113,9 +144,7 @@ export function Header() {
                   <ul className="mt-1 min-w-max bg-white/90 px-3 py-2 font-light text-sga-red shadow-[0_8px_20px_rgba(0,0,0,0.14)]">
                     {item.items?.map((dropdownItem) => (
                       <li key={dropdownItem.href}>
-                        <Link href={dropdownItem.href} className="block whitespace-nowrap py-1.5">
-                          {dropdownItem.label}
-                        </Link>
+                        <MobileDropdownLink item={dropdownItem} />
                       </li>
                     ))}
                   </ul>
