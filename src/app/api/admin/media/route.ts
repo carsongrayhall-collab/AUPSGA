@@ -31,13 +31,25 @@ export async function POST(request: NextRequest) {
     return new Response(validationError, { status: 400 });
   }
 
-  const src = await persistMediaFile(key, file);
-  await setMediaConfig(key, {
-    alt,
-    objectPosition,
-    src,
-    updatedAt: new Date().toISOString(),
-  });
+  let src: string;
+
+  try {
+    src = await persistMediaFile(key, file);
+    await setMediaConfig(key, {
+      alt,
+      objectPosition,
+      src,
+      updatedAt: new Date().toISOString(),
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown media upload error.";
+
+    if (request.headers.get("accept")?.includes("application/json")) {
+      return Response.json({ error: `Media upload failed: ${message}` }, { status: 500 });
+    }
+
+    return new Response(`Media upload failed: ${message}`, { status: 500 });
+  }
 
   if (request.headers.get("accept")?.includes("application/json")) {
     return Response.json({ alt, key, objectPosition, src });

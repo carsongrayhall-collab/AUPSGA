@@ -3,6 +3,7 @@ import "server-only";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { put } from "@vercel/blob";
+import { getBlobCommandOptions } from "@/lib/blobStorage";
 
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -22,18 +23,20 @@ export function validateMediaFile(file: File) {
 export async function persistMediaFile(key: string, file: File) {
   const extension = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
   const filename = `${key}-${Date.now()}.${extension}`;
+  const blobOptions = getBlobCommandOptions();
 
-  if (process.env.BLOB_READ_WRITE_TOKEN) {
+  if (blobOptions) {
     const blob = await put(`media/${filename}`, file, {
-      access: "public",
-      token: process.env.BLOB_READ_WRITE_TOKEN,
+      ...blobOptions,
+      access: "private",
+      contentType: file.type,
     });
 
-    return blob.url;
+    return `/api/blob/${blob.pathname}`;
   }
 
   if (process.env.VERCEL === "1") {
-    throw new Error("BLOB_READ_WRITE_TOKEN is required for production media uploads.");
+    throw new Error("Vercel Blob storage credentials are required for production media uploads.");
   }
 
   const uploadDir = path.join(process.cwd(), "public", "uploads", "media");

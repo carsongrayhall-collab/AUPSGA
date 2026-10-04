@@ -2,7 +2,8 @@ import "server-only";
 
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { put } from "@vercel/blob";
+import { get, put } from "@vercel/blob";
+import { getBlobCommandOptions } from "@/lib/blobStorage";
 
 const MAX_WORKBOOK_UPLOAD_BYTES = 10 * 1024 * 1024;
 const localWorkbookDirectory = path.join(process.cwd(), ".data", "workbooks");
@@ -39,24 +40,25 @@ export async function persistWorkbookFile(file: File): Promise<PersistedWorkbook
   const buffer = Buffer.from(await file.arrayBuffer());
   const fileName = file.name;
   const updatedAt = new Date().toISOString();
+  const blobOptions = getBlobCommandOptions();
 
-  if (process.env.BLOB_READ_WRITE_TOKEN) {
+  if (blobOptions) {
     const blob = await put(`workbooks/treasury-records-${Date.now()}.xlsx`, buffer, {
-      access: "public",
+      ...blobOptions,
+      access: "private",
       contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      token: process.env.BLOB_READ_WRITE_TOKEN,
     });
 
     return {
       fileName,
       size: file.size,
-      src: blob.url,
+      src: `blob:${blob.pathname}`,
       updatedAt,
     };
   }
 
   if (process.env.VERCEL === "1") {
-    throw new Error("BLOB_READ_WRITE_TOKEN is required for production workbook uploads.");
+    throw new Error("Vercel Blob storage credentials are required for production workbook uploads.");
   }
 
   await mkdir(localWorkbookDirectory, { recursive: true });
@@ -71,6 +73,26 @@ export async function persistWorkbookFile(file: File): Promise<PersistedWorkbook
 }
 
 export async function readPersistedWorkbookFile(src: string) {
+  if (src.startsWith("blob:")) {
+    const blobOptions = getBlobCommandOptions();
+
+    if (!blobOptions) {
+      throw new Error("Vercel Blob storage credentials are required to read the uploaded workbook.");
+    }
+
+    const blob = await get(src.slice("blob:".length), {
+      ...blobOptions,
+      access: "private",
+      useCache: false,
+    });
+
+    if (!blob || blob.statusCode !== 200) {
+      throw new Error("The uploaded workbook file could not be read.");
+    }
+
+    return Buffer.from(await new Response(blob.stream).arrayBuffer());
+  }
+
   if (/^https?:\/\//i.test(src)) {
     const response = await fetch(src, { cache: "no-store" });
 

@@ -4,6 +4,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { Redis } from "@upstash/redis";
 import { get, put } from "@vercel/blob";
+import { getBlobCommandOptions, type BlobCredentialOptions } from "@/lib/blobStorage";
 
 export type MediaConfig = {
   alt: string;
@@ -98,10 +99,6 @@ function getRedis() {
   });
 }
 
-function getBlobToken() {
-  return process.env.BLOB_READ_WRITE_TOKEN?.trim() || null;
-}
-
 function normalizeConfig(config: Partial<SiteConfig> | null | undefined): SiteConfig {
   return {
     media: config?.media ?? { ...defaultConfig.media },
@@ -113,10 +110,10 @@ function normalizeConfig(config: Partial<SiteConfig> | null | undefined): SiteCo
   };
 }
 
-async function readBlobConfig(token: string) {
+async function readBlobConfig(options: BlobCredentialOptions) {
   const blob = await get(BLOB_CONFIG_PATH, {
+    ...options,
     access: "private",
-    token,
     useCache: false,
   });
 
@@ -127,12 +124,12 @@ async function readBlobConfig(token: string) {
   return JSON.parse(await new Response(blob.stream).text()) as SiteConfig;
 }
 
-async function writeBlobConfig(token: string, config: SiteConfig) {
+async function writeBlobConfig(options: BlobCredentialOptions, config: SiteConfig) {
   await put(BLOB_CONFIG_PATH, JSON.stringify(config, null, 2), {
+    ...options,
     access: "private",
     allowOverwrite: true,
     contentType: "application/json",
-    token,
   });
 }
 
@@ -143,10 +140,10 @@ export async function getSiteConfig(): Promise<SiteConfig> {
     return normalizeConfig(await redis.get<SiteConfig>(CONFIG_KEY));
   }
 
-  const blobToken = getBlobToken();
+  const blobOptions = getBlobCommandOptions();
 
-  if (blobToken) {
-    return normalizeConfig(await readBlobConfig(blobToken));
+  if (blobOptions) {
+    return normalizeConfig(await readBlobConfig(blobOptions));
   }
 
   try {
@@ -164,15 +161,15 @@ export async function saveSiteConfig(config: SiteConfig) {
     return;
   }
 
-  const blobToken = getBlobToken();
+  const blobOptions = getBlobCommandOptions();
 
-  if (blobToken) {
-    await writeBlobConfig(blobToken, config);
+  if (blobOptions) {
+    await writeBlobConfig(blobOptions, config);
     return;
   }
 
   if (process.env.VERCEL === "1") {
-    throw new Error("Persistent Redis or Vercel Blob storage is required in production.");
+    throw new Error("Persistent Redis or Vercel Blob storage credentials are required in production.");
   }
 
   await mkdir(path.dirname(localConfigPath), { recursive: true });
