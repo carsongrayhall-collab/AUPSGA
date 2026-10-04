@@ -84,9 +84,6 @@ export default function Home() {
     <main className="bg-white text-sga-red">
       <section className="relative">
         <MediaSlot label="Looping video hero media slot" className="aspect-[484/130] min-h-[15rem] w-full md:min-h-[22rem]" />
-        <div className="absolute inset-0 grid place-items-center bg-black/5 px-6 text-center">
-          <p className="text-5xl font-normal uppercase leading-none tracking-normal text-black/70 md:text-7xl">Looping Video</p>
-        </div>
       </section>
 
       <section className="mx-auto max-w-5xl px-6 py-12 text-center md:py-16">
@@ -248,7 +245,6 @@ export default function Home() {
           </div>
           <div className="relative">
             <MediaSlot label="Merch media slot" className="aspect-[307/174] w-full" />
-            <p className="absolute inset-0 grid place-items-center text-5xl font-normal uppercase leading-none text-black/70">Merch</p>
           </div>
         </div>
       </section>

@@ -101,7 +101,12 @@ export function MediaSlot({
         className,
       ].join(" ")}
     >
-      <MediaSlotEditControl alt={accessibleLabel} mediaKey={resolvedMediaKey} />
+      <MediaSlotEditControl
+        alt={accessibleLabel}
+        currentObjectPosition={mediaConfig?.objectPosition}
+        currentSrc={resolvedSrc}
+        mediaKey={resolvedMediaKey}
+      />
       {resolvedSrc ? (
         <Image
           src={resolvedSrc}
