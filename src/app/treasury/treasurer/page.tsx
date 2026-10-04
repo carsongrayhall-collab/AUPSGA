@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { MediaSlot } from "@/components/MediaSlot";
 
@@ -148,15 +147,15 @@ export default function TreasurerPage() {
       </section>
 
       <section aria-labelledby="treasury-resources-heading" className="relative overflow-hidden pb-20 pt-20 md:pb-24">
-        <div className="absolute inset-x-0 top-16 h-44 bg-sga-red md:top-20" aria-hidden="true">
-          <Image
-            src="/images/treasury-page-banner.png"
-            alt=""
-            fill
-            sizes="100vw"
-            className="object-cover opacity-95"
-          />
-        </div>
+        <MediaSlot
+          label="Treasury page banner image slot"
+          mediaKey="treasury-page-banner"
+          src="/images/treasury-page-banner.png"
+          alt="Treasury page banner with money graphics"
+          imageClassName="object-cover opacity-95"
+          sizes="100vw"
+          className="absolute inset-x-0 top-16 h-44 bg-sga-red md:top-20"
+        />
         <h2 id="treasury-resources-heading" className="sr-only">
           Treasury Resources
         </h2>

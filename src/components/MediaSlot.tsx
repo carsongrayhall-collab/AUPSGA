@@ -14,6 +14,7 @@ type MediaSlotProps = {
   imageClassName?: string;
   mediaKey?: string;
   priority?: boolean;
+  sizes?: string;
   tone?: "light" | "red";
   children?: ReactNode;
 };
@@ -24,6 +25,11 @@ type PublicMediaConfig = {
   src: string;
 };
 
+type MediaUpdatedDetail = {
+  key: string;
+  media: PublicMediaConfig;
+};
+
 export function MediaSlot({
   label,
   className = "",
@@ -32,6 +38,7 @@ export function MediaSlot({
   imageClassName = "object-cover",
   mediaKey,
   priority = false,
+  sizes = "(min-width: 1024px) 36vw, (min-width: 768px) 48vw, 100vw",
   tone = "light",
   children,
 }: MediaSlotProps) {
@@ -46,7 +53,7 @@ export function MediaSlot({
   useEffect(() => {
     let cancelled = false;
 
-    fetch(`/api/media/${encodeURIComponent(resolvedMediaKey)}`)
+    fetch(`/api/media/${encodeURIComponent(resolvedMediaKey)}`, { cache: "no-store" })
       .then((response) => (response.ok ? response.json() : null))
       .then((data: PublicMediaConfig | null) => {
         if (!cancelled && data?.src) {
@@ -61,6 +68,22 @@ export function MediaSlot({
 
     return () => {
       cancelled = true;
+    };
+  }, [resolvedMediaKey]);
+
+  useEffect(() => {
+    function handleMediaUpdated(event: Event) {
+      const { detail } = event as CustomEvent<MediaUpdatedDetail>;
+
+      if (detail?.key === resolvedMediaKey && detail.media?.src) {
+        setMediaConfig(detail.media);
+      }
+    }
+
+    window.addEventListener("sga-media-updated", handleMediaUpdated);
+
+    return () => {
+      window.removeEventListener("sga-media-updated", handleMediaUpdated);
     };
   }, [resolvedMediaKey]);
 
@@ -86,7 +109,7 @@ export function MediaSlot({
           aria-hidden="true"
           fill
           priority={priority}
-          sizes="(min-width: 1024px) 36vw, (min-width: 768px) 48vw, 100vw"
+          sizes={sizes}
           className={imageClassName}
           style={imageStyle}
         />

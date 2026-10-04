@@ -1,18 +1,33 @@
 "use client";
 
-import { useEffect, useRef, useState, type DragEvent } from "react";
+import { useEffect, useState, type ChangeEvent, type DragEvent, type MouseEvent, type PointerEvent } from "react";
 
 type MediaSlotEditControlProps = {
   alt: string;
   mediaKey: string;
 };
 
+type MediaUploadResponse = {
+  alt: string;
+  key: string;
+  objectPosition?: string;
+  src: string;
+};
+
+function stopParentNavigation(event: DragEvent | PointerEvent) {
+  event.preventDefault();
+  event.stopPropagation();
+}
+
+function isolateFromParentHandlers(event: MouseEvent | PointerEvent) {
+  event.stopPropagation();
+}
+
 export function MediaSlotEditControl({ alt, mediaKey }: MediaSlotEditControlProps) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -65,7 +80,21 @@ export function MediaSlotEditControl({ alt, mediaKey }: MediaSlotEditControlProp
         return;
       }
 
-      window.location.reload();
+      const media = (await response.json()) as MediaUploadResponse;
+
+      window.dispatchEvent(
+        new CustomEvent("sga-media-updated", {
+          detail: {
+            key: media.key,
+            media: {
+              alt: media.alt,
+              objectPosition: media.objectPosition,
+              src: media.src,
+            },
+          },
+        }),
+      );
+      setMessage("Updated");
     } catch {
       setMessage("Upload failed.");
     } finally {
@@ -73,42 +102,54 @@ export function MediaSlotEditControl({ alt, mediaKey }: MediaSlotEditControlProp
     }
   }
 
-  function handleDrop(event: DragEvent<HTMLButtonElement>) {
-    event.preventDefault();
+  function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
+    event.stopPropagation();
+    void uploadFile(event.currentTarget.files?.[0]);
+    event.currentTarget.value = "";
+  }
+
+  function handleDrop(event: DragEvent<HTMLLabelElement>) {
+    stopParentNavigation(event);
     setIsDragging(false);
     void uploadFile(event.dataTransfer.files[0]);
   }
 
   return (
-    <div className="absolute right-2 top-2 z-20 grid justify-items-end gap-2">
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/png,image/jpeg,image/webp"
-        className="sr-only"
-        onChange={(event) => {
-          void uploadFile(event.currentTarget.files?.[0]);
-          event.currentTarget.value = "";
-        }}
-      />
-      <button
-        type="button"
-        onClick={() => inputRef.current?.click()}
+    <div
+      className="absolute right-2 top-2 z-20 grid justify-items-end gap-2"
+      onClick={isolateFromParentHandlers}
+      onPointerDown={isolateFromParentHandlers}
+    >
+      <label
         onDragEnter={(event) => {
-          event.preventDefault();
+          stopParentNavigation(event);
           setIsDragging(true);
         }}
-        onDragOver={(event) => event.preventDefault()}
-        onDragLeave={() => setIsDragging(false)}
+        onDragOver={stopParentNavigation}
+        onDragLeave={(event) => {
+          stopParentNavigation(event);
+          setIsDragging(false);
+        }}
         onDrop={handleDrop}
-        disabled={isUploading}
+        aria-disabled={isUploading}
         className={[
-          "rounded-[3px] bg-white px-3 py-1 text-sm font-semibold uppercase leading-none text-sga-red shadow-[0_2px_8px_rgba(0,0,0,0.22)] transition hover:bg-black hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white disabled:opacity-70",
+          "relative inline-flex cursor-pointer overflow-hidden rounded-[3px] bg-white px-3 py-1 text-sm font-semibold uppercase leading-none text-sga-red shadow-[0_2px_8px_rgba(0,0,0,0.22)] transition hover:bg-black hover:text-white focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-white",
           isDragging ? "bg-black text-white" : "",
+          isUploading ? "pointer-events-none opacity-70" : "",
         ].join(" ")}
       >
+        <input
+          type="file"
+          accept="image/png,image/jpeg,image/webp"
+          disabled={isUploading}
+          aria-label={`Upload image for ${alt}`}
+          className="absolute inset-0 cursor-pointer opacity-0"
+          onChange={handleFileChange}
+          onClick={isolateFromParentHandlers}
+          onPointerDown={isolateFromParentHandlers}
+        />
         {isUploading ? "Uploading" : isDragging ? "Drop Image" : "Edit"}
-      </button>
+      </label>
       {message ? (
         <p className="max-w-40 bg-white px-2 py-1 text-right text-sm font-semibold leading-tight text-sga-red shadow-[0_2px_8px_rgba(0,0,0,0.22)]">
           {message}
