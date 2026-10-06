@@ -1,88 +1,14 @@
+export const dynamic = "force-dynamic";
+
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { ExecutiveStickyTitle } from "@/components/ExecutiveStickyTitle";
 import { MediaSlot } from "@/components/MediaSlot";
 
-type RepGroup = {
-  title: string;
-  description?: string;
-  contact: string;
-  members: string[];
-};
-
-const departmentGroups: RepGroup[] = [
-  {
-    title: "Communications, Media, and Culture Representatives",
-    description:
-      "Represent students within the Communications, Media, and Culture department by bringing their concerns, ideas, and academic interests to SGA.",
-    contact: "sga_cmc@aup.edu",
-    members: ["VACANT", "VACANT"],
-  },
-  {
-    title: "Art History and Fine Arts Representative",
-    description:
-      "Represents students in Art History and Fine Arts by advocating for their academic needs, creative perspectives, and department-specific concerns within the Senate.",
-    contact: "sga_art@aup.edu",
-    members: ["Ava Crespo"],
-  },
-  {
-    title: "Computer Science, Mathematics, and Environmental Science Representatives",
-    description:
-      "Represent students across analytical, technical, and scientific fields by bringing department-specific needs, ideas, and academic concerns to the Senate.",
-    contact: "sga_csmes@aup.edu",
-    members: ["Max Jordy", "Madison Shearer"],
-  },
-  {
-    title: "Economics and Management Representative",
-    description:
-      "Represent students in business, economics, and management fields by advocating for their academic interests, professional development needs, and department-specific concerns within the Senate.",
-    contact: "sga_eandm@aup.edu",
-    members: ["Rita Okwor", "Carson Hall", "Antonella Henkens"],
-  },
-  {
-    title: "History and Politics Representatives",
-    description:
-      "Represent students in History, Law, and Politics by advocating for their academic interests, civic perspectives, and department-specific concerns within the Senate.",
-    contact: "sga_hp@aup.edu",
-    members: ["Belen Bolhuis", "Peter Dean Orola-Andrada", "Claire Strickland"],
-  },
-  {
-    title: "Psychology, Health, and Gender Representative",
-    description:
-      "Represents students in Psychology, Health, and Gender Studies by bringing department-specific concerns, academic needs, and student perspectives to the Senate.",
-    contact: "sga_phg@aup.edu",
-    members: ["VACANT"],
-  },
-];
-
-const classGroups: RepGroup[] = [
-  {
-    title: "Freshmen Representatives",
-    contact: "sga_firstyear@aup.edu",
-    members: ["VACANT", "VACANT"],
-  },
-  {
-    title: "Sophomore Representatives",
-    contact: "sga_sophomore@aup.edu",
-    members: ["VACANT", "VACANT", "VACANT"],
-  },
-  {
-    title: "Junior Representatives",
-    contact: "sga_junior@aup.edu",
-    members: ["VACANT", "VACANT", "VACANT", "VACANT"],
-  },
-  {
-    title: "Senior Representatives",
-    contact: "sga_senior@aup.edu",
-    members: ["VACANT", "VACANT"],
-  },
-  {
-    title: "Graduate Representatives",
-    contact: "sga_graduate@aup.edu",
-    members: ["VACANT", "VACANT"],
-  },
-];
+import { departmentGroups, classGroups, type RepGroup } from "@/lib/pageContent";
+import { getSiteConfig } from "@/lib/siteConfig";
+import { ProfileCaption } from "@/components/ProfileCaption";
 
 export const metadata: Metadata = {
   title: "Senators | AUP Student Government Association",
@@ -90,23 +16,25 @@ export const metadata: Metadata = {
     "Meet the Senate representatives of The American University of Paris Student Government Association.",
 };
 
-function RepresentativeTile({ name, groupTitle }: { name: string; groupTitle: string }) {
+async function RepresentativeTile({ name, groupTitle, id }: { name: string; groupTitle: string; id: string }) {
+  const config = await getSiteConfig();
+  const profile = config.profiles[id] ?? { name, title: groupTitle };
   return (
     <article className="w-full max-w-[13rem]">
       <div className="relative">
         <MediaSlot
+          editor={{ id, section: "senators", mainText: profile.name, subtext: profile.title }}
+          mediaKey={id}
           label={`${name}, ${groupTitle} representative image slot`}
           className="aspect-[112/137] w-full"
         />
-        <h3 className="absolute inset-x-0 bottom-0 z-10 bg-sga-red/85 px-3 py-2 text-center text-2xl font-semibold uppercase leading-none text-white">
-          {name}
-        </h3>
+        <ProfileCaption id={id} name={name} title={groupTitle} />
       </div>
     </article>
   );
 }
 
-function RepGroupBlock({ group }: { group: RepGroup }) {
+function RepGroupBlock({ group, groupIndex }: { group: RepGroup; groupIndex: number }) {
   return (
     <article className="mx-auto max-w-3xl py-8 text-center md:py-10">
       <h3 className="mx-auto max-w-3xl text-3xl font-semibold uppercase leading-none text-sga-red md:text-4xl">
@@ -136,7 +64,7 @@ function RepGroupBlock({ group }: { group: RepGroup }) {
         ].join(" ")}
       >
         {group.members.map((member, index) => (
-          <RepresentativeTile key={`${group.title}-${member}-${index}`} name={member} groupTitle={group.title} />
+          <RepresentativeTile key={`${group.title}-${member}-${index}`} id={`senator-${groupIndex}-${index}`} name={member} groupTitle={group.title} />
         ))}
       </div>
     </article>
@@ -154,7 +82,8 @@ function SectionHeading({ id, title }: { id: string; title: string }) {
   );
 }
 
-export default function SenatorsPage() {
+export default async function SenatorsPage() {
+  const config = await getSiteConfig();
   return (
     <main className="relative isolate overflow-hidden bg-white text-sga-red">
       <ExecutiveStickyTitle titleSrc="/images/the-reps-fullscreen-16x9.svg">
@@ -163,8 +92,8 @@ export default function SenatorsPage() {
             <section aria-labelledby="department-representatives-heading" className="py-12 md:py-16">
               <SectionHeading id="department-representatives-heading" title="Department Representatives" />
               <div className="mt-8">
-                {departmentGroups.map((group) => (
-                  <RepGroupBlock key={group.title} group={group} />
+                {departmentGroups.map((group, index) => (
+                  <RepGroupBlock key={group.title} group={group} groupIndex={index} />
                 ))}
               </div>
             </section>
@@ -175,10 +104,14 @@ export default function SenatorsPage() {
                 Represent their academic year by bringing student concerns, ideas, and priorities to SGA, helping ensure each class has a clear voice in Senate discussions and student advocacy.
               </p>
               <div className="mt-8">
-                {classGroups.map((group) => (
-                  <RepGroupBlock key={group.title} group={group} />
+                {classGroups.map((group, index) => (
+                  <RepGroupBlock key={group.title} group={group} groupIndex={index + departmentGroups.length} />
                 ))}
               </div>
+            </section>
+
+            <section aria-label="Additional senator" className="flex justify-center py-8">
+              <RepresentativeTile id="senator-additional" name={config.profiles["senator-additional"]?.name ?? "VACANT"} groupTitle={config.profiles["senator-additional"]?.title ?? "Senator"} />
             </section>
 
             <section aria-labelledby="full-senate-heading" className="mx-auto max-w-4xl py-12 text-center md:py-16">

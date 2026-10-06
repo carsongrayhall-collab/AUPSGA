@@ -4,9 +4,11 @@ import { useMemo, useState } from "react";
 
 type MediaUploadFormProps = {
   initialKey: string;
+  fixedKey?: boolean;
+  initialAlt?: string;
 };
 
-export function MediaUploadForm({ initialKey }: MediaUploadFormProps) {
+export function MediaUploadForm({ initialKey, fixedKey = false, initialAlt }: MediaUploadFormProps) {
   const [preview, setPreview] = useState<string | null>(null);
   const [x, setX] = useState(50);
   const [y, setY] = useState(50);
@@ -14,7 +16,7 @@ export function MediaUploadForm({ initialKey }: MediaUploadFormProps) {
 
   return (
     <form action="/api/admin/media" method="post" encType="multipart/form-data" className="mt-6 grid gap-5">
-      <label className="grid gap-2 text-xl font-semibold uppercase leading-none">
+      {fixedKey ? <input type="hidden" name="key" value={initialKey} /> : <label className="grid gap-2 text-xl font-semibold uppercase leading-none">
         Media key
         <input
           name="key"
@@ -22,12 +24,13 @@ export function MediaUploadForm({ initialKey }: MediaUploadFormProps) {
           required
           className="min-h-11 rounded-[3px] border border-sga-red/35 px-3 text-xl font-normal normal-case"
         />
-      </label>
+      </label>}
 
       <label className="grid gap-2 text-xl font-semibold uppercase leading-none">
         Alternative text
         <input
           name="alt"
+          defaultValue={initialAlt}
           required
           className="min-h-11 rounded-[3px] border border-sga-red/35 px-3 text-xl font-normal normal-case"
         />

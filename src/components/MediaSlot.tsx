@@ -6,7 +6,10 @@ import Image from "next/image";
 import { slugifyKey } from "@/lib/keys";
 import { MediaSlotEditControl } from "@/components/MediaSlotEditControl";
 
+import { ContentEditControl, type ContentEditor } from "@/components/ContentEditControl";
+
 type MediaSlotProps = {
+  editor?: ContentEditor;
   label: string;
   className?: string;
   src?: string;
@@ -32,6 +35,7 @@ type MediaUpdatedDetail = {
 
 export function MediaSlot({
   label,
+  editor,
   className = "",
   src,
   alt,
@@ -101,12 +105,12 @@ export function MediaSlot({
         className,
       ].join(" ")}
     >
-      <MediaSlotEditControl
+      {editor ? <ContentEditControl editor={editor} mediaKey={resolvedMediaKey} src={resolvedSrc} objectPosition={mediaConfig?.objectPosition} alt={accessibleLabel} /> : <MediaSlotEditControl
         alt={accessibleLabel}
         currentObjectPosition={mediaConfig?.objectPosition}
         currentSrc={resolvedSrc}
         mediaKey={resolvedMediaKey}
-      />
+      />}
       {resolvedSrc ? (
         <Image
           src={resolvedSrc}

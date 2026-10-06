@@ -1,84 +1,14 @@
+export const dynamic = "force-dynamic";
+
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { ExecutiveStickyTitle } from "@/components/ExecutiveStickyTitle";
 import { MediaSlot } from "@/components/MediaSlot";
 
-type ExecutiveProfile = {
-  name: string;
-  role: string;
-  description: string;
-  email: string;
-};
-
-const undergraduateProfiles: ExecutiveProfile[] = [
-  {
-    name: "Ben Kolendo",
-    role: "Undergraduate President",
-    description:
-      "Represents undergraduate students, leads advocacy efforts, and helps coordinate SGA priorities on behalf of the student body.",
-    email: "undergrad-president@aup.edu",
-  },
-  {
-    name: "Vacant",
-    role: "Undergraduate Vice President",
-    description:
-      "Supports the Undergraduate President, helps coordinate student advocacy initiatives, and and represents undergraduate student interests.",
-    email: "undergrad-vp@aup.edu",
-  },
-  {
-    name: "Lorelei Smucker",
-    role: "Joint Treasurer",
-    description:
-      "Oversees SGA finances, reviews budget requests, guides funding decisions, and ensures student initiatives are supported through responsible financial planning.",
-    email: "treasurer-sga@aup.edu",
-  },
-  {
-    name: "VACANT",
-    role: "Undergraduate Social Director",
-    description:
-      "Plans and supports events that build undergraduate community, encourage student connection, and strengthen campus life.",
-    email: "undergrad-social@aup.edu",
-  },
-  {
-    name: "VACANT",
-    role: "Undergraduate Communication Director",
-    description:
-      "Manages SGA messaging, shares updates with undergraduate students, and helps ensure student voices, events, and initiatives are clearly communicated.",
-    email: "undergrad-comms@aup.edu",
-  },
-];
-
-const graduateProfiles: ExecutiveProfile[] = [
-  {
-    name: "Katherine Lu",
-    role: "Graduate President",
-    description:
-      "Represents graduate students, leads graduate advocacy efforts, and helps coordinate SGA priorities that support the graduate student experience.",
-    email: "grad-president@aup.edu",
-  },
-  {
-    name: "VACANT",
-    role: "Graduate Vice President",
-    description:
-      "Supports the Graduate President, helps advance graduate student initiatives, and represents graduate student interests across SGA activities.",
-    email: "grad-vp@aup.edu",
-  },
-  {
-    name: "Sydney Livingston",
-    role: "Graduate Social Director",
-    description:
-      "Plans and supports events that build graduate community, encourage connection, and strengthen graduate student life at AUP.",
-    email: "grad-social@aup.edu",
-  },
-  {
-    name: "Stephanie Oghweh",
-    role: "Graduate Communication Director",
-    description:
-      "Manages SGA messaging for graduate students, shares updates, and helps keep graduate voices, events, and initiatives clearly communicated.",
-    email: "grad-comms@aup.edu",
-  },
-];
+import { undergraduateProfiles, graduateProfiles, type ExecutiveProfile } from "@/lib/pageContent";
+import { getSiteConfig } from "@/lib/siteConfig";
+import { ProfileCaption } from "@/components/ProfileCaption";
 
 export const metadata: Metadata = {
   title: "The Executive Team | AUP Student Government Association",
@@ -86,24 +16,27 @@ export const metadata: Metadata = {
     "Meet the Executive Team of The American University of Paris Student Government Association.",
 };
 
-function ExecutiveProfileCard({
+async function ExecutiveProfileCard({
   profile,
   centered = false,
+  id,
 }: {
   profile: ExecutiveProfile;
+  id: string;
   centered?: boolean;
 }) {
+  const config = await getSiteConfig();
+  const saved = config.profiles[id] ?? { name: profile.name, title: profile.role };
   return (
     <article className={centered ? "mx-auto w-full max-w-[19rem]" : "w-full"}>
       <div className="relative">
         <MediaSlot
+          editor={{ id, section: "executives", mainText: saved.name, subtext: saved.title }}
+          mediaKey={id}
           label={`${profile.name}, ${profile.role} profile image slot`}
           className="aspect-[170/204] w-full"
         />
-        <div className="absolute inset-x-0 bottom-0 z-10 bg-sga-red/85 px-4 py-3 text-white">
-          <h3 className="text-3xl font-semibold uppercase leading-[0.9]">{profile.name}</h3>
-          <p className="mt-1 text-lg font-semibold uppercase leading-none">{profile.role}</p>
-        </div>
+        <ProfileCaption id={id} name={profile.name} title={profile.role} />
       </div>
       <p className="mt-3 text-lg font-light leading-tight text-sga-red">{profile.description}</p>
       <p className="mt-2 text-lg font-semibold uppercase leading-tight text-sga-red">
@@ -136,18 +69,18 @@ function BoardSection({
 
       {undergraduate ? (
         <div className="mx-auto mt-10 grid max-w-4xl gap-x-8 gap-y-10 sm:grid-cols-2 lg:gap-x-12">
-          <ExecutiveProfileCard profile={profiles[0]} />
-          <ExecutiveProfileCard profile={profiles[1]} />
+          <ExecutiveProfileCard id="exec-0" profile={profiles[0]} />
+          <ExecutiveProfileCard id="exec-1" profile={profiles[1]} />
           <div className="sm:col-span-2">
-            <ExecutiveProfileCard profile={profiles[2]} centered />
+            <ExecutiveProfileCard id="exec-2" profile={profiles[2]} centered />
           </div>
-          <ExecutiveProfileCard profile={profiles[3]} />
-          <ExecutiveProfileCard profile={profiles[4]} />
+          <ExecutiveProfileCard id="exec-3" profile={profiles[3]} />
+          <ExecutiveProfileCard id="exec-4" profile={profiles[4]} />
         </div>
       ) : (
         <div className="mx-auto mt-10 grid max-w-4xl gap-x-8 gap-y-10 sm:grid-cols-2 lg:gap-x-12">
-          {profiles.map((profile) => (
-            <ExecutiveProfileCard key={`${profile.role}-${profile.email}`} profile={profile} />
+          {profiles.map((profile, index) => (
+            <ExecutiveProfileCard id={`exec-${index + 5}`} key={`${profile.role}-${profile.email}`} profile={profile} />
           ))}
         </div>
       )}

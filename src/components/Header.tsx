@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -43,6 +44,7 @@ function MobileDropdownLink({ item }: { item: DropdownItem }) {
 
 export function Header() {
   const pathname = usePathname();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const isActiveItem = (item: (typeof navItems)[number]) => {
     if (item.href) {
@@ -70,6 +72,19 @@ export function Header() {
             Student Government Association
           </span>
         </Link>
+
+        <button
+          type="button"
+          aria-label={mobileMenuOpen ? "Close navigation" : "Open navigation"}
+          aria-expanded={mobileMenuOpen}
+          aria-controls="mobile-navigation"
+          onClick={() => setMobileMenuOpen((open) => !open)}
+          className="ml-auto flex h-11 w-11 shrink-0 items-center justify-center gap-1.5 rounded hover:bg-white/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white lg:hidden"
+        >
+          <span aria-hidden="true" className="h-6 w-0.5 rounded bg-white" />
+          <span aria-hidden="true" className="h-6 w-0.5 rounded bg-white" />
+          <span aria-hidden="true" className="h-6 w-0.5 rounded bg-white" />
+        </button>
 
         <nav aria-label="Primary navigation" className="ml-auto hidden lg:w-[47.921875rem] lg:block">
           <ul className="flex items-center gap-6 xl:gap-8">
@@ -122,7 +137,14 @@ export function Header() {
         </nav>
       </div>
 
-      <nav aria-label="Primary navigation mobile" className="border-t border-white/20 px-4 py-2 lg:hidden">
+      <nav
+        id="mobile-navigation"
+        aria-label="Primary navigation mobile"
+        className={`${mobileMenuOpen ? "block" : "hidden"} max-h-[calc(100svh-4rem)] overflow-y-auto border-t border-white/20 px-4 py-2 lg:hidden`}
+        onClick={(event) => {
+          if ((event.target as HTMLElement).closest("a")) setMobileMenuOpen(false);
+        }}
+      >
         <ul className="flex flex-wrap gap-2 text-[0.72rem] font-semibold uppercase">
           {navItems.map((item) => {
             const isActive = isActiveItem(item);

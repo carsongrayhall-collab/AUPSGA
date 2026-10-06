@@ -1,5 +1,9 @@
 import "server-only";
 
+import { cache } from "react";
+import { profileDefaults } from "@/lib/pageContent";
+import { slugifyKey } from "@/lib/keys";
+
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { Redis } from "@upstash/redis";
@@ -39,6 +43,9 @@ export type WorkbookConfig = {
 
 export type SiteConfig = {
   media: Record<string, MediaConfig>;
+  homeLinks: Record<string, string>;
+  homeContent: Record<string, { mainText: string; subtext: string }>;
+  profiles: Record<string, { name: string; title: string }>;
   timeline: TimelineConfigEvent[];
   workbook: WorkbookConfig;
 };
@@ -49,6 +56,9 @@ const localConfigPath = path.join(process.cwd(), ".data", "site-config.json");
 
 export const defaultConfig: SiteConfig = {
   media: {},
+  homeLinks: {},
+  homeContent: {},
+  profiles: {},
   timeline: [
     {
       date: "September 10th, 2026",
@@ -100,8 +110,28 @@ function getRedis() {
 }
 
 function normalizeConfig(config: Partial<SiteConfig> | null | undefined): SiteConfig {
+  const media = { ...(config?.media ?? {}) };
+  for (const [id, profile] of Object.entries(profileDefaults)) {
+    const legacyKey = slugifyKey(`${profile.name}, ${profile.title} ${id.startsWith("exec-") ? "profile" : "representative"} image slot`);
+    if (!media[id] && media[legacyKey]) media[id] = media[legacyKey];
+  }
+  const homeMediaLabels: Record<string, string> = {
+    "home-news-0": "We have so much money left over right now! thumbnail media slot",
+    "home-news-1": "Something is happening in the Amex or something thumbnail media slot",
+    "home-news-2": "Get your tickets now! image media slot",
+    "home-news-3": "Get your tickets now! image media slot",
+    "home-quick-0": "SGA Initiatives media slot",
+    "home-quick-1": "Student Resources media slot",
+    "home-quick-2": "Legislative Activities media slot",
+  };
+  for (const [key, label] of Object.entries(homeMediaLabels)) {
+    if (!media[key] && media[slugifyKey(label)]) media[key] = media[slugifyKey(label)];
+  }
   return {
-    media: config?.media ?? { ...defaultConfig.media },
+    homeLinks: config?.homeLinks ?? {},
+    homeContent: config?.homeContent ?? {},
+    profiles: config?.profiles ?? {},
+    media,
     timeline: config?.timeline ?? [...defaultConfig.timeline],
     workbook: {
       ...defaultConfig.workbook,
@@ -133,7 +163,7 @@ async function writeBlobConfig(options: BlobCredentialOptions, config: SiteConfi
   });
 }
 
-export async function getSiteConfig(): Promise<SiteConfig> {
+export const getSiteConfig = cache(async (): Promise<SiteConfig> => {
   const redis = getRedis();
 
   if (redis) {
@@ -151,7 +181,7 @@ export async function getSiteConfig(): Promise<SiteConfig> {
   } catch {
     return defaultConfig;
   }
-}
+});
 
 export async function saveSiteConfig(config: SiteConfig) {
   const redis = getRedis();

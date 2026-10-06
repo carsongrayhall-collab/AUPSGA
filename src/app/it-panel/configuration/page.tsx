@@ -1,3 +1,4 @@
+import { PageEditors } from "@/components/admin/PageEditors";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -89,6 +90,7 @@ export default async function ConfigurationPage({ searchParams }: ConfigurationP
       ) : null}
 
       <section className="mx-auto grid max-w-6xl gap-8 px-6 py-12 lg:px-10">
+        <PageEditors />
         <article className="border-l-8 border-sga-red bg-white px-6 py-6 shadow-[5px_3px_2px_rgba(0,0,0,0.16)]">
           <h2 className="text-5xl font-semibold uppercase leading-none tracking-[-0.05em]">
             Treasury Timeline
