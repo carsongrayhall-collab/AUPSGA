@@ -128,7 +128,7 @@ export default async function Home() {
       <section className="border-y border-sga-red/35 px-6 py-12">
         <div className="mx-auto max-w-6xl">
           <div className="text-center">
-            <h2 className="text-5xl font-semibold uppercase leading-none tracking-normal">Current News</h2>
+            <h2 className="text-5xl font-semibold uppercase leading-none tracking-normal">Upcoming Events/Initiatives</h2>
             <p className="mx-auto mt-4 max-w-2xl text-xl font-light leading-tight">
               Updates from Senate, committees, treasury, and student life at AUP.
             </p>
