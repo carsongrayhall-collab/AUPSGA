@@ -3,6 +3,8 @@ import "server-only";
 import { cache } from "react";
 import { profileDefaults } from "@/lib/pageContent";
 import { slugifyKey } from "@/lib/keys";
+import { defaultPositions, legacyPositionMediaKey, positionMediaKey, type CommitteePosition } from "@/lib/committeePositions";
+import { committeeDetails } from "@/lib/committeeDetails";
 
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -42,6 +44,7 @@ export type WorkbookConfig = {
 };
 
 export type SiteConfig = {
+  committees: Record<string, CommitteePosition[]>;
   media: Record<string, MediaConfig>;
   homeLinks: Record<string, string>;
   homeContent: Record<string, { mainText: string; subtext: string }>;
@@ -55,6 +58,7 @@ const BLOB_CONFIG_PATH = "config/site-config.json";
 const localConfigPath = path.join(process.cwd(), ".data", "site-config.json");
 
 export const defaultConfig: SiteConfig = {
+  committees: {},
   media: {},
   homeLinks: {},
   homeContent: {},
@@ -111,6 +115,15 @@ function getRedis() {
 
 function normalizeConfig(config: Partial<SiteConfig> | null | undefined): SiteConfig {
   const media = { ...(config?.media ?? {}) };
+  for (const committee of Object.values(committeeDetails)) {
+    const committeeId = committee.shortName.toLowerCase();
+    if (config?.committees?.[committeeId] !== undefined) continue;
+    for (const position of defaultPositions(committee.memberRows)) {
+      const key = positionMediaKey(committeeId, position.id);
+      const legacy = media[legacyPositionMediaKey(position.name)];
+      if (!media[key] && legacy) media[key] = { ...legacy };
+    }
+  }
   for (const [id, profile] of Object.entries(profileDefaults)) {
     const legacyKey = slugifyKey(`${profile.name}, ${profile.title} ${id.startsWith("exec-") ? "profile" : "representative"} image slot`);
     if (!media[id] && media[legacyKey]) media[id] = media[legacyKey];
@@ -128,6 +141,7 @@ function normalizeConfig(config: Partial<SiteConfig> | null | undefined): SiteCo
     if (!media[key] && media[slugifyKey(label)]) media[key] = media[slugifyKey(label)];
   }
   return {
+    committees: config?.committees ?? {},
     homeLinks: config?.homeLinks ?? {},
     homeContent: config?.homeContent ?? {},
     profiles: config?.profiles ?? {},
