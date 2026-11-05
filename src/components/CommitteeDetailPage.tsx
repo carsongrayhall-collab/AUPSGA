@@ -1,6 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { MediaSlot } from "@/components/MediaSlot";
+import { CommitteeEditor } from "@/components/CommitteeEditor";
+import { getAdminSession } from "@/lib/adminAuth";
+import { getSiteConfig } from "@/lib/siteConfig";
+import { defaultPositions, legacyPositionMediaKey, positionMediaKey } from "@/lib/committeePositions";
 
 export type CommitteeScheduleItem = {
   day: string;
@@ -26,15 +30,17 @@ export type CommitteeDetail = {
   adjacent?: AdjacentCommitteeLink[];
 };
 
-function MemberTile({ name }: { name: string }) {
+function MemberTile({ name, mediaKey, src }: { name: string; mediaKey: string; src?: string }) {
   return (
     <article className="w-full max-w-[12rem]">
       <div className="relative">
         <MediaSlot
+          mediaKey={mediaKey}
+          src={src}
           label={`${name} committee member image slot`}
           className="aspect-[72/117] w-full"
         />
-        <h3 className="absolute inset-x-0 bottom-1 z-10 px-2 text-center text-xl font-semibold uppercase leading-none text-white">
+        <h3 className="pointer-events-none absolute inset-x-0 bottom-1 z-10 px-2 text-center text-xl font-semibold uppercase leading-none text-white">
           {name}
         </h3>
       </div>
@@ -101,7 +107,25 @@ function CommitteeArrow({ href, label, direction }: AdjacentCommitteeLink) {
   );
 }
 
-export function CommitteeDetailPage({ committee }: { committee: CommitteeDetail }) {
+export async function CommitteeDetailPage({ committee }: { committee: CommitteeDetail }) {
+  const [config, session] = await Promise.all([getSiteConfig(), getAdminSession()]);
+  const committeeId = committee.shortName.toLowerCase();
+  const saved = config.committees[committeeId];
+  const positions = (saved ?? defaultPositions(committee.memberRows)).map(position => ({
+    ...position,
+    src: (config.media[positionMediaKey(committeeId, position.id)] ??
+      (saved === undefined ? config.media[legacyPositionMediaKey(position.name)] : undefined))?.src,
+  }));
+  const rows: typeof positions[] = [];
+  if (saved === undefined) {
+    let offset = 0;
+    for (const row of committee.memberRows) {
+      rows.push(positions.slice(offset, offset + row.length));
+      offset += row.length;
+    }
+  } else {
+    for (let index = 0; index < positions.length; index += 4) rows.push(positions.slice(index, index + 4));
+  }
   const headingId = `${committee.shortName.toLowerCase()}-heading`;
 
   return (
@@ -162,13 +186,15 @@ export function CommitteeDetailPage({ committee }: { committee: CommitteeDetail 
             >
               Committee Members
             </h2>
-            {committee.memberRows.map((row, rowIndex) => (
+            {session && <CommitteeEditor committeeId={committeeId} title={committee.title} positions={positions} />}
+            {positions.length === 0 && <p className="mt-8 text-xl">No committee positions are currently listed.</p>}
+            {rows.map((row, rowIndex) => (
               <div
                 key={`${committee.shortName}-row-${rowIndex}`}
                 className={rowClassName(row.length).replace("mt-6", rowIndex === 0 ? "mt-9" : "mt-6")}
               >
-                {row.map((member, index) => (
-                  <MemberTile key={`${member}-${index}`} name={member} />
+                {row.map((member) => (
+                  <MemberTile key={`${member.id}-${member.src ?? ""}`} name={member.name} mediaKey={positionMediaKey(committeeId, member.id)} src={member.src} />
                 ))}
               </div>
             ))}

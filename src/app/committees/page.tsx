@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ExecutiveStickyTitle } from "@/components/ExecutiveStickyTitle";
 import { MediaSlot } from "@/components/MediaSlot";
+import { getAdminSession } from "@/lib/adminAuth";
 
 type Committee = {
   name: string;
@@ -69,7 +70,7 @@ export const metadata: Metadata = {
     "Explore the committees of The American University of Paris Student Government Association.",
 };
 
-function CommitteeRow({ committee }: { committee: Committee }) {
+function CommitteeRow({ committee, canEdit }: { committee: Committee; canEdit: boolean }) {
   return (
     <article className="grid gap-7 py-10 md:grid-cols-[minmax(20rem,42vw)_minmax(0,1fr)] md:items-center md:gap-10 md:py-12">
       <div className="relative aspect-[242/207] w-[calc(100vw-1.5rem)] max-w-[34rem] md:w-full md:max-w-none">
@@ -102,12 +103,14 @@ function CommitteeRow({ committee }: { committee: Committee }) {
         >
           Read More
         </Link>
+        {canEdit && <Link href={`${committee.href}#committee-members-heading`} className="mt-5 block text-xl font-semibold underline">Edit names, images, and positions</Link>}
       </div>
     </article>
   );
 }
 
-export default function CommitteesPage() {
+export default async function CommitteesPage() {
+  const session = await getAdminSession();
   return (
     <main className="relative isolate overflow-hidden bg-white text-sga-red">
       <ExecutiveStickyTitle titleSrc="/images/committees-fullscreen-16x9.svg">
@@ -124,7 +127,7 @@ export default function CommitteesPage() {
 
             <section aria-label="SGA committees" className="divide-y divide-sga-red/25">
               {committees.map((committee) => (
-                <CommitteeRow key={committee.acronym} committee={committee} />
+                <CommitteeRow key={committee.acronym} committee={committee} canEdit={Boolean(session)} />
               ))}
             </section>
           </div>
